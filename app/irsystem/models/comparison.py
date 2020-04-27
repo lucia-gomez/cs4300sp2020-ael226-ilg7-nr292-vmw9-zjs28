@@ -8,6 +8,7 @@ from app.irsystem.models.shared_variables import jar
 from app.irsystem.models.shared_variables import max_document_frequency
 from app.irsystem.models.processing import tokenize
 from app.irsystem.models.inverted_index import InvertedIndex
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 """
     Computes cosine similarity between the given query and all the posts
@@ -39,15 +40,37 @@ def get_cossim(query, inv_index, idf, norms):
     return cos_sim
 
 """
+    Organizes the differences between sentiment of query string and
+    sentiment of each post. Normalizes values to [0, 1] range.
+    Combines score for total with cossim score, returns dict.
+    Note: [p] in [0, 1] is the weight given to sentiment analysis.
+"""
+def use_sentiment(query, sentiment_lookup, cossim, p):
+    analyzer = SentimentIntensityAnalyzer()
+    query_score = analyzer.polarity_scores(query)['compound']
+    new_scores = {}
+    for k in cossim.keys():
+        # For some reason, there are posts with sentiment undocumented
+        # Only using factoring in sentiment analysis on those with strong sentiment
+        if k in sentiment_lookup and (query_score > 0.5 or query_score < -0.5) :
+            sentim_diff = abs((query_score - sentiment_lookup[k]) / 2)
+            new_scores[k] = p*(1 - sentim_diff) + (1-p)*(cossim[k])
+        else:
+            new_scores[k] = cossim[k]
+    return new_scores
+
+"""
     Returns the post ids of the top x posts that match the query
     TODO: make more complicated (ML, etc.) later
 """
-def comparison(query, inverted_index, idf, norms):
-    top_dict = get_cossim(query, inverted_index, idf, norms)
-    return Counter(top_dict).most_common()
+def comparison(query, inverted_index, idf, norms, sentiment_lookup, p):
+    tokens = inverted_index.getStem(tokenize(query))
+    top_dict = get_cossim(tokens, inverted_index, idf, norms)
+    new_top = use_sentiment(query, sentiment_lookup, top_dict, p)
+    return Counter(new_top).most_common()
 
-def compare_string_to_posts(query, inverted_index, idf, norms):
-    return comparison(inverted_index.getStem(tokenize(query)), inverted_index, idf, norms)
+def compare_string_to_posts(query, inverted_index, idf, norms, sentiment_lookup, p):
+    return comparison(query, inverted_index, idf, norms, sentiment_lookup, p)
 
 """
     Top-level function, outputs list of subreddits for each post in
