@@ -116,7 +116,7 @@ def rocchio(original_tokenized_query, sim_scores, post_lookup):
 
     #extend the length of the query by 20%
 
-    print(sum_queries(q0, rel_count)[:10])
+    print("top 10 potential query additons".format(sum_queries(q0, rel_count)[:10]))
     q1 = sum_queries(q0, rel_count)[:math.ceil(len(original_tokenized_query) * 1.2)]
     new_query = []
 

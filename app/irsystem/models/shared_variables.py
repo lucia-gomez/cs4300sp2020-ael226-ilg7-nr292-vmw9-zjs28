@@ -8,7 +8,7 @@ min_words_per_post = 15
 num_partitions = 50 #for the inverted index
 max_document_frequency = 0.10
 min_document_frequency = 15
-create_dataset_or_structures = True
+create_dataset_or_structures = False
 pseudo_relevance_rocchio_top_posts = 15
 pseudo_relevance_rocchio_lowest_posts = 50
 """

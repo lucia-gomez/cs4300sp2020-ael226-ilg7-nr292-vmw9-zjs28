@@ -16,6 +16,9 @@ class SearchEngine():
     def __init__(self, should_build_structures):
         if should_build_structures:
             self.create()
+        self.init_pickles()
+
+    def init_pickles(self):
         idf, norms, post_lookup, subreddit_lookup, descriptions, sentiment_lookup = self.open_datastructures()
         self.inverted_index = None
         self.idf = idf
@@ -79,8 +82,8 @@ class SearchEngine():
         scores = {}
         for i in [x * 0.05 for x in range(0, 21)]:
             for j in range(len(queries)):
-                ranks = compare_string_to_posts(queries[j], self.inverted_index, self.idf, self.norms, self.sentiment_lookup, i)
-                subreddits = find_subreddits(20, ranks, self.post_lookup, self.subreddit_lookup)
+                ranks = compare_string_to_posts(queries[j], self.inverted_index, self.idf, self.norms, self.post_lookup, self.sentiment_lookup, i)
+                subreddits = find_subreddits(20, ranks, self.post_lookup, self.subreddit_lookup, self.descriptions)
                 for k in range(20):
                     if subreddits[k][0] in relevant[j]:
                         if i in scores:
@@ -120,6 +123,7 @@ class SearchEngine():
 
         print("Run interactive tests? y/n")
         if input() == 'y':
+            self.init_pickles()
             self.run_tests()
 
         print("delay end.")
