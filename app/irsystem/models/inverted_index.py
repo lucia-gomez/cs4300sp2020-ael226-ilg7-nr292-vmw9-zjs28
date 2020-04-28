@@ -2,8 +2,7 @@ from collections import Counter
 import pickle
 from app.irsystem.models.shared_variables import file_path_name
 from app.irsystem.models.shared_variables import num_partitions
-from nltk.stem import PorterStemmer
-stemmer=PorterStemmer()
+from app.irsystem.models.shared_variables import this_dir
 
 """
 create a class to handle inverted indices (creation & execution)
@@ -14,13 +13,6 @@ class InvertedIndex():
     def __init__(self):
         self.inverted_indices = [None for _ in range(num_partitions)]
         self._inverted_index_helper = {}
-        print("initialized inverted index")
-
-    def get_stem_of_words(self,tokens):
-        return [self.get_stem_of_word(word) for word in tokens]
-
-    def get_stem_of_word(self, token):
-        return stemmer.stem(token)
 
     def create(self, data):
         print("...creating inverted index")
@@ -30,11 +22,8 @@ class InvertedIndex():
 
         num_posts = len(data)
         print("num posts: {}".format(num_posts))
-        i = 0
         for post in data:
-            i += 1
-            print(i)
-            words = self.get_stem_of_words(post['tokens'])
+            words = post['tokens']
             count = Counter(words) #count frequency of each word
             for word, frequency in count.most_common():
                 if not word in inverted_index_helper:
@@ -45,8 +34,8 @@ class InvertedIndex():
                 inverted_index[word].append((post['id'], frequency))
         self.inverted_indices = inverted_indices
         self._inverted_index_helper = inverted_index_helper
-        print(len(self.inverted_indices))
-        print(len(self._inverted_index_helper))
+        print(len(self.inverted_indices), "num inverted indices")
+        print(len(self._inverted_index_helper), "inverted index helper")
 
     def store(self):
         for i in range(len(self.inverted_indices)):
@@ -60,7 +49,7 @@ class InvertedIndex():
         return "{}-inverted_index-{}.pickle".format(file_path_name, str(suffix))
 
     def load_file(self, file_suffix):
-        print("...loading " + self.create_file_name(file_suffix))
+        #print("...loading " + self.create_file_name(file_suffix))
         with open(self.create_file_name(file_suffix), 'rb') as file:
             return pickle.load(file)
 

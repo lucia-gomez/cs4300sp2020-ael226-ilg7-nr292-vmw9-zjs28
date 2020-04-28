@@ -10,3 +10,4 @@ unused-picklejar
 picklejar
 *.json
 .DS_Store
+venv

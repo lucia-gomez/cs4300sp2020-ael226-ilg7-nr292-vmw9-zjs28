@@ -14,7 +14,7 @@ from app.irsystem.models.processing import process_post
 script is used to create a json of the top n posts for the top 100 subreddits
 """
 
-time_between_calls = 0.2  # seconds
+time_between_calls = 0.50  # seconds
 
 
 def make_query(subreddit):
@@ -87,7 +87,8 @@ def create_dataset():
             time.sleep(time_between_calls)
 
             # make query to api
-            raw_response = requests.get(make_query(subreddit))
+            raw_response = requests.get(make_query(subreddit), headers={
+                'User-agent': 'x'})
             response = raw_response.json()
             data = response['data']
 

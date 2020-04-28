@@ -1,12 +1,14 @@
 import json
 import re
 import pickle
+import spacy
 from app.irsystem.models.shared_variables import file_path
 from app.irsystem.models.shared_variables import file_path_name
 from app.irsystem.models.shared_variables import num_posts
 from app.irsystem.models.shared_variables import min_words_per_post
-from app.irsystem.models.create_structures import load_data
 from collections import Counter
+
+nlp = spacy.load("en_core_web_sm")
 
 """
 this file is to filter out the array of posts based on the following filters:
@@ -44,10 +46,19 @@ def should_keep(post):
             return False, name
     return True, ""
 
+def stem_word(text):
+    doc = nlp(text)
+    return doc[0].lemma_
 
-def tokenize(text):
-    return re.findall(r'[a-z]+', text.lower())
+def tokenize(text, remove_punctuation=True):
+    #use this to remove punctuation effectively
+    if remove_punctuation:
+        text = " ".join(re.findall(r'[a-z]+', text.lower()))
 
+    doc = nlp(text)
+
+    tokenized = [str(token.lemma_) for token in doc]
+    return tokenized
 
 def tokenize_post(post, tokenizer=tokenize):
     words_title = tokenizer(post['title'].lower())

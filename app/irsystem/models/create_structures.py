@@ -9,7 +9,9 @@ import numpy as np
 from app.irsystem.models.shared_variables import file_path
 from app.irsystem.models.shared_variables import file_path_name
 from app.irsystem.models.shared_variables import max_document_frequency
+from app.irsystem.models.shared_variables import min_document_frequency
 from app.irsystem.models.inverted_index import InvertedIndex
+from app.irsystem.models.processing import tokenize
 """
 this file is to create datastructures. Currently creates:
 
@@ -49,6 +51,9 @@ def get_idf(inv_index, num_docs, min_df=0, max_df=0.1):  # TODO: change these mi
         df = len(v)
         if df >= min_df and df <= max_rat:
             idf[k] = num_docs / float(df)
+            #idf[k] = math.log(num_docs / (1 + float(df)), 1.5)
+        else:
+            print("idf of {} is {} with a total of {}".format(k, df, num_docs))
     return idf
 
 
@@ -98,36 +103,72 @@ def create_and_store_structures():
     print("...loading data")
     data = load_data()
     num_docs = len(data)
+    #
+    # #need to tokenize all posts first
+    # print("tokenizing posts")
+    # i = 0
+    # for post in data:
+    #     i += 1
+    #     if i % 50 == 0:
+    #         printProgressBar(i, num_docs)
+    #     post['tokens'] = tokenize(" ".join(post['tokens']), False)
+    #
+    #
+    # print("...making inverted index(will take a long time)")
+    # inverted_index = make_inverted_index(data)
 
-    print("...making inverted index(will take a long time)")
-    inverted_index = make_inverted_index(data)
+    inverted_index = InvertedIndex()
+    inverted_index.load()
 
-    print("...computing idf")
-    idf = get_idf(inverted_index, num_docs, 0, max_document_frequency)
+    print("...computing idf for {}".format(num_docs))
+    idf = get_idf(inverted_index, num_docs, min_document_frequency, max_document_frequency)
 
     print("...pruning inverted index")
     #remove values that were removed from the idf
     tokens = inverted_index.keys()
     for token in tokens:
         if not token in idf:
+            print("removing: {}".format(token))
             inverted_index.remove_token(token)
 
-    print("...making subreddit lookup")
-    post_lookup, subreddit_lookup = make_post_subreddit_lookup(data, inverted_index)
+    # print("...making subreddit lookup")
+    # post_lookup, subreddit_lookup = make_post_subreddit_lookup(data, inverted_index)
 
     print("...getting doc norms")
     norms = get_doc_norms(inverted_index, idf, num_docs)
-
-    # store data in pickle files
-
-    print("...storing post lookup")
-    pickle.dump(post_lookup, open(file_path_name + "-post_lookup.pickle", 'wb'))
-    print("...storing subreddit lookup")
-    pickle.dump(subreddit_lookup, open(file_path_name + "-subreddit_lookup.pickle", 'wb'))
-    print("...storing inverted index")
-    inverted_index.store()
+    #
+    # # store data in pickle files
+    #
+    # print("...storing post lookup")
+    # pickle.dump(post_lookup, open(file_path_name + "-post_lookup.pickle", 'wb'))
+    # print("...storing subreddit lookup")
+    # pickle.dump(subreddit_lookup, open(file_path_name + "-subreddit_lookup.pickle", 'wb'))
+    # print("...storing inverted index")
+    # inverted_index.store()
     print("...storing idf")
     pickle.dump(idf, open(file_path_name + "-idf.pickle", 'wb'))
     print("...storing doc norms")
     pickle.dump(norms, open(file_path_name + "-norms.pickle", 'wb'))
     print("completed creating and storing structures.")
+
+# Print iterations progress (got from online)
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
+    # Print New Line on Complete
+    if iteration == total:
+        print()

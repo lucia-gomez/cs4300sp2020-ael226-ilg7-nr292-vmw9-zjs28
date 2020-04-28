@@ -28,6 +28,7 @@ class SearchEngine():
         with open(file_path_name + "-idf.pickle", 'rb') as file:
             print("...loading idf")
             idf = pickle.load(file)
+            print("num words in idf: {}".format(len(idf.keys())))
             print("finished loading idf.")
 
         with open(file_path_name + "-norms.pickle", 'rb') as file:
