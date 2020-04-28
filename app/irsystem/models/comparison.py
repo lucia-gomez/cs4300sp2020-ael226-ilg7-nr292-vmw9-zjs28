@@ -9,6 +9,7 @@ from app.irsystem.models.shared_variables import max_document_frequency
 from app.irsystem.models.shared_variables import pseudo_relevance_rocchio_top_posts
 from app.irsystem.models.shared_variables import pseudo_relevance_rocchio_lowest_posts
 from app.irsystem.models.processing import tokenize
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 """
     Computes cosine similarity between the given query and all the posts
@@ -46,14 +47,15 @@ def get_cossim(query, inv_index, idf, norms):
     Returns the post ids of the top x posts that match the query
     TODO: make more complicated (ML, etc.) later
 """
-def comparison(query, inverted_index, idf, norms):
+def comparison(query, inverted_index, idf, norms, sentiment_lookup, p):
     top_dict = get_cossim(query, inverted_index, idf, norms)
-    return Counter(top_dict).most_common()
+    new_top = use_sentiment(query, sentiment_lookup, top_dict, p)
+    return Counter(new_top).most_common()
 
-def compare_string_to_posts(query, inverted_index, idf, norms, post_lookup):
+def compare_string_to_posts(query, inverted_index, idf, norms, post_lookup, sentiment_lookup, p):
     tokenized_query = tokenize(query)
     print("tokenized and stemmed query: {}".format(tokenized_query))
-    scores = comparison(tokenized_query, inverted_index, idf, norms)
+    scores = comparison(tokenized_query, inverted_index, idf, norms, sentiment_lookup, p)
 
     if(len(scores) <= 0):
         return scores
@@ -62,7 +64,8 @@ def compare_string_to_posts(query, inverted_index, idf, norms, post_lookup):
 
     print("new query after rocchio: {}".format(new_query))
 
-    updated_scores = comparison(new_query, inverted_index, idf, norms)
+    updated_scores = comparison(new_query, inverted_index, idf, norms, sentiment_lookup, p)
+
     return updated_scores
 
 def sort_similarity_scores(sim_scores):
@@ -123,12 +126,31 @@ def rocchio(original_tokenized_query, sim_scores, post_lookup):
             new_query.append(word)
 
     return new_query
+
+"""
+    Organizes the differences between sentiment of query string and
+    sentiment of each post. Normalizes values to [0, 1] range.
+    Combines score for total with cossim score, returns dict.
+    Note: [p] in [0, 1] is the weight given to sentiment analysis.
+"""
+def use_sentiment(query, sentiment_lookup, cossim, p):
+    analyzer = SentimentIntensityAnalyzer()
+    query_score = analyzer.polarity_scores(query)['compound']
+    new_scores = {}
+    for k in cossim.keys():
+        # For some reason, there are posts with sentiment undocumented
+        # Only using factoring in sentiment analysis on those with strong sentiment
+        if k in sentiment_lookup and (query_score > 0.5 or query_score < -0.5) :
+            sentim_diff = abs((query_score - sentiment_lookup[k]) / 2)
+            new_scores[k] = p*(1 - sentim_diff) + (1-p)*(cossim[k])
+        else:
+            new_scores[k] = cossim[k]
+    return new_scores
+
 """
     Top-level function, outputs list of subreddits for each post in
     post_ids (set of unique subreddit names)
 """
-
-
 def find_subreddits(top_x, post_ids, post_lookup, subreddit_lookup, descriptions):
     # need to group posts by subreddit
     subreddit_dict = {}

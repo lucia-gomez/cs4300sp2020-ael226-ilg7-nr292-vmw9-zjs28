@@ -78,7 +78,7 @@ def process_post(post):
         shortened_post['tokens'] = tokenize_post(shortened_post)
 
         #remove the title and body of the post to lessen the size of the dataset
-        del shortened_post['selftext']
+        #del shortened_post['selftext']
         del shortened_post['title']
 
         return True, shortened_post, None

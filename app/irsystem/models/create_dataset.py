@@ -87,8 +87,7 @@ def create_dataset():
             time.sleep(time_between_calls)
 
             # make query to api
-            raw_response = requests.get(make_query(subreddit), headers={
-                'User-agent': 'x'})
+            raw_response = requests.get(make_query(subreddit))
             response = raw_response.json()
             data = response['data']
 

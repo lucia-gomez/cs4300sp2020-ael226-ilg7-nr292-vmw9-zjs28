@@ -12,6 +12,7 @@ from app.irsystem.models.shared_variables import max_document_frequency
 from app.irsystem.models.shared_variables import min_document_frequency
 from app.irsystem.models.inverted_index import InvertedIndex
 from app.irsystem.models.processing import tokenize
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 """
 this file is to create datastructures. Currently creates:
 
@@ -84,7 +85,13 @@ def get_doc_norms(inv_index, idf, num_docs):
 def make_post_subreddit_lookup(data, inverted_index):
     post_lookup = {}
     subreddit_lookup = {}
+    sentiment_lookup = {}
+    analyzer = SentimentIntensityAnalyzer()
     for post in data:
+        #Create sentiment analysis lookup data
+        score = analyzer.polarity_scores(post['selftext'])['compound']
+        sentiment_lookup[post['id']] = score
+
         post_lookup[post['id']] = {}
         post_lookup[post['id']]['subreddit'] = post['subreddit']
         cnt = Counter()
@@ -95,7 +102,7 @@ def make_post_subreddit_lookup(data, inverted_index):
         if not post['subreddit'] in subreddit_lookup:
             subreddit_lookup[post['subreddit']] = 0
         subreddit_lookup[post['subreddit']] += 1
-    return post_lookup, subreddit_lookup
+    return post_lookup, subreddit_lookup, sentiment_lookup
 
 def create_and_store_structures():
     print("...creating structures")
@@ -103,19 +110,19 @@ def create_and_store_structures():
     print("...loading data")
     data = load_data()
     num_docs = len(data)
-    #
-    # #need to tokenize all posts first
-    # print("tokenizing posts")
-    # i = 0
-    # for post in data:
-    #     i += 1
-    #     if i % 50 == 0:
-    #         printProgressBar(i, num_docs)
-    #     post['tokens'] = tokenize(" ".join(post['tokens']), False)
-    #
-    #
-    # print("...making inverted index(will take a long time)")
-    # inverted_index = make_inverted_index(data)
+
+    #need to tokenize all posts first
+    print("tokenizing posts")
+    i = 0
+    for post in data:
+        i += 1
+        if i % 50 == 0:
+            printProgressBar(i, num_docs)
+        post['tokens'] = tokenize(" ".join(post['tokens']), False)
+
+
+    print("...making inverted index(will take a long time)")
+    inverted_index = make_inverted_index(data)
 
     inverted_index = InvertedIndex()
     inverted_index.load()
@@ -131,20 +138,21 @@ def create_and_store_structures():
             print("removing: {}".format(token))
             inverted_index.remove_token(token)
 
-    # print("...making subreddit lookup")
-    # post_lookup, subreddit_lookup = make_post_subreddit_lookup(data, inverted_index)
+    print("...making subreddit lookup")
+    post_lookup, subreddit_lookup, sentiment_lookup = make_post_subreddit_lookup(data, inverted_index)
 
     print("...getting doc norms")
     norms = get_doc_norms(inverted_index, idf, num_docs)
-    #
-    # # store data in pickle files
-    #
-    # print("...storing post lookup")
-    # pickle.dump(post_lookup, open(file_path_name + "-post_lookup.pickle", 'wb'))
-    # print("...storing subreddit lookup")
-    # pickle.dump(subreddit_lookup, open(file_path_name + "-subreddit_lookup.pickle", 'wb'))
-    # print("...storing inverted index")
-    # inverted_index.store()
+
+    # store data in pickle files
+    print("...storing post lookup")
+    pickle.dump(post_lookup, open(file_path_name + "-post_lookup.pickle", 'wb'))
+    print("...storing subreddit lookup")
+    pickle.dump(subreddit_lookup, open(file_path_name + "-subreddit_lookup.pickle", 'wb'))
+    print("...storing sentiment lookup")
+    pickle.dump(sentiment_lookup, open(file_path_name + "-sentiment_lookup.pickle", 'wb'))
+    print("...storing inverted index")
+    inverted_index.store()
     print("...storing idf")
     pickle.dump(idf, open(file_path_name + "-idf.pickle", 'wb'))
     print("...storing doc norms")
