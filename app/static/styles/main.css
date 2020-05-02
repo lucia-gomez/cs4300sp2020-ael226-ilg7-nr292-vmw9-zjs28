@@ -16,6 +16,15 @@
     color: #222222;
     width: 100%;
     font-family: 'Varela Round', sans-serif;
+    text-align: center;
+}
+
+.version-links {
+  transform: translateY(-50px);
+}
+
+.version-links a {
+  color: #ff4600!important; 
 }
 
 .body {
@@ -127,7 +136,6 @@
 
 #title {
   font-size: 55px; 
-  text-align: center;
   line-height: 155px;
 }
 
