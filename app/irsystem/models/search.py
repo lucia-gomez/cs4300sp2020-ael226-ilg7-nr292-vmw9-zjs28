@@ -82,8 +82,10 @@ class SearchEngine():
         scores = {}
         for i in [x * 0.05 for x in range(0, 21)]:
             for j in range(len(queries)):
-                ranks = compare_string_to_posts(queries[j], self.inverted_index, self.idf, self.norms, self.post_lookup, self.sentiment_lookup, i)
-                subreddits = find_subreddits(20, ranks, self.post_lookup, self.subreddit_lookup, self.descriptions)
+                ranks = compare_string_to_posts(
+                    queries[j], self.inverted_index, self.idf, self.norms, self.post_lookup, self.sentiment_lookup, i)
+                subreddits = find_subreddits(
+                    20, ranks, self.post_lookup, self.subreddit_lookup, self.descriptions)
                 for k in range(20):
                     if subreddits[k][0] in relevant[j]:
                         if i in scores:
@@ -93,11 +95,12 @@ class SearchEngine():
         print("TESTING COMPLETED\nRESULTS:")
         print(scores)
 
-    def search(self, query):
+    def search(self, query, title):
         if self.inverted_index is None:
             self.inverted_index = InvertedIndex()
             self.inverted_index.load()
-        ranks = compare_string_to_posts(query, self.inverted_index, self.idf, self.norms, self.post_lookup, self.sentiment_lookup, 0.25)
+        ranks = compare_string_to_posts(self.inverted_index,
+                                        self.idf, self.norms, self.post_lookup, self.sentiment_lookup, 0.25, query, title)
         return find_subreddits(10, ranks, self.post_lookup, self.subreddit_lookup, self.descriptions)
 
     def create(self):

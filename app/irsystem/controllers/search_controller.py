@@ -11,13 +11,14 @@ search_engine = SearchEngine(create_dataset_or_structures)
 @irsystem.route('/', methods=['GET'])
 def search():
     query = request.args.get('search')
-    if not query:
+    title = request.args.get('title_input')
+    if (not query) and (not title):
         data = []
         result_header_message = ''
         error_message = ''
         response = ''
     else:
-        data = search_engine.search(query)
+        data = search_engine.search(query, title)
         if not data:
             response = "response"
             result_header_message = ""
@@ -29,4 +30,4 @@ def search():
     return render_template('search.html', name=project_name,
                            class_name=class_name, result_header_message=result_header_message,
                            error_message=error_message,
-                           data=data, query=query, response=response)
+                           data=data, query=query, response=response, title=title)

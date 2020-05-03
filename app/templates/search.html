@@ -31,7 +31,10 @@
         <form class="form-inline global-search">
           <h3 class="outputmessage">Draft your post:</h3>
           <div class="form-group">
-            <textarea id="input" type="text" name="search" class="form-control" placeholder="Ask me anything" style="resize: none;">{{query if query!= None else '' }}</textarea>
+            <input type="text" id="title_input" name="title_input" class="form-control" placeholder="Title"
+              value="{{title}}">
+            <textarea id="input" type="text" name="search" class="form-control" placeholder="Ask me anything"
+              style="resize: none;">{{query if query!= None else '' }}</textarea>
             <button type="submit" class="btn btn-info"> Go! </button>
           </div>
         </form>
@@ -45,7 +48,8 @@
           <!-- <a class="list-group-item list-group-item-action active" data-toggle="tab"
                         href="#sub-{{data[0]['subreddit']}}">r/{{data[0]['subreddit']}}</a> -->
           {% for d in data %}
-          <a class="list-group-item list-group-item-action" id="list-{{d['subreddit']}}" data-toggle="tab" href="#sub-{{d['subreddit']}}">r/{{d['subreddit']}}</a>
+          <a class="list-group-item list-group-item-action" id="list-{{d['subreddit']}}" data-toggle="tab"
+            href="#sub-{{d['subreddit']}}">r/{{d['subreddit']}}</a>
           {% endfor %}
         </ul>
       </div>
@@ -53,7 +57,8 @@
         <div class="tab-content">
           {% for d in data %}
           <div id="sub-{{d['subreddit']}}" class="tab-pane fade-in">
-            <h3 class="outputmessage" style="text-decoration: underline;"><a href="https://www.reddit.com/r/{{d['subreddit']}}/submit" target="_blank">
+            <h3 class="outputmessage" style="text-decoration: underline;"><a
+                href="https://www.reddit.com/r/{{d['subreddit']}}/submit" target="_blank">
                 r/{{d['subreddit']}}</a></h3>
             <p>
               {% if d['description'] != '' %}
@@ -71,7 +76,7 @@
         $("#list-{{data[0]['subreddit']}}").addClass("active");
       </script>
       {% else %}
-      {% if query %}
+      {% if query or title %}
       <div class="column error-column">
         <h1 style="padding-top: 10px;">Oops!</h1>
         <p style="padding: 20px;">{{error_message}}</p>

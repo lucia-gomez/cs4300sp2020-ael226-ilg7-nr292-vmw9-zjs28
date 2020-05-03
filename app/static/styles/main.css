@@ -171,3 +171,7 @@ a.list-group-item{
 .tab-content p {
   font-family: 'Varela Round', sans-serif;
 }
+
+input#title_input {
+  width: 100%;
+}
