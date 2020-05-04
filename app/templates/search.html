@@ -1,91 +1,92 @@
 <html>
 
 <head>
-  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="../static/styles/main.css" />
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../static/styles/main.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </head>
 
 <body>
-  <div class="header">
-    <h1 class="header-item" id="title">
-      <img class="header-item" src="static/images/reddit-logo.png" height="100">
-      Subreddit Recommender
-    </h1>
-    <div class="version-links">
-      <a href="https://subreddit-recommender.herokuapp.com/">V1</a>
-      <a href="http://35.186.160.138:5000/">V2</a>
-      <a href="http://35.245.129.70:5000/" style="text-decoration: underline;">Final</a>
-    </div>
-  </div>
-  <div class="body">
-    <div class="jumbotron">
-      <h2 class="jumbotron-item">Where do I post?</h2>
-      <p class="jumbotron-item"> Welcome to the Subreddit Recommender! Have you ever wanted to post on Reddit, but
-        didn’t know which subreddit to post in? Enter your post below to see which subreddit it belongs in!</p>
-    </div>
-    <div class="flex-container">
-      <div class="column left-column">
-        <form class="form-inline global-search">
-          <h3 class="outputmessage">Draft your post:</h3>
-          <div class="form-group">
-            <input type="text" id="title_input" name="title_input" class="form-control" placeholder="Title"
-              value="{{title if title!= None else ''}}">
-            <textarea id="input" type="text" name="search" class="form-control" placeholder="Ask me anything"
-              style="resize: none;">{{query if query!= None else '' }}</textarea>
-            <button type="submit" class="btn btn-info"> Go! </button>
-          </div>
-        </form>
-      </div>
-      {% if data %}
-      <div class="column middle-column">
-        <div id={{response}}>
-          <h3 class="outputmessage">{{result_header_message}}</h3>
+    <div class="header">
+        <h1 class="header-item" id="title">
+            <img class="header-item" src="static/images/reddit-logo.png" height="100">
+            Subreddit Recommender
+        </h1>
+        <div class="version-links">
+            <a href="https://subreddit-recommender.herokuapp.com/">V1</a>
+            <a href="http://35.186.160.138:5000/">V2</a>
+            <a href="http://35.245.129.70:5000/" style="text-decoration: underline;">Final</a>
         </div>
-        <ul class="list-group list-group-flush">
-          <!-- <a class="list-group-item list-group-item-action active" data-toggle="tab"
-                        href="#sub-{{data[0]['subreddit']}}">r/{{data[0]['subreddit']}}</a> -->
-          {% for d in data %}
-          <a class="list-group-item list-group-item-action" id="list-{{d['subreddit']}}" data-toggle="tab"
-            href="#sub-{{d['subreddit']}}">r/{{d['subreddit']}}</a>
-          {% endfor %}
-        </ul>
-      </div>
-      <div class="column right-column">
-        <div class="tab-content">
-          {% for d in data %}
-          <div id="sub-{{d['subreddit']}}" class="tab-pane fade-in">
-            <h3 class="outputmessage" style="text-decoration: underline;"><a
-                href="https://www.reddit.com/r/{{d['subreddit']}}/submit" target="_blank">
-                r/{{d['subreddit']}}</a></h3>
-            <p>
-              {% if d['description'] != '' %}
-              {{d['description']}}
-              {% else %}
-              This subreddit doesn't have a description. How mysterious!
-              {% endif %}
-            </p>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      <script>
-        $("#sub-{{data[0]['subreddit']}}").addClass("active");
-        $("#list-{{data[0]['subreddit']}}").addClass("active");
-      </script>
-      {% else %}
-      {% if query or title %}
-      <div class="column error-column">
-        <h1 style="padding-top: 10px;">Oops!</h1>
-        <p style="padding: 20px;">{{error_message}}</p>
-        <img src="static/images/error.gif" style="width: 350px; height: auto;">
-      </div>
-      {% endif %}
-      {% endif %}
     </div>
-  </div>
+    <div class="body">
+        <div class="jumbotron">
+            <h2 class="jumbotron-item">Where do I post?</h2>
+            <p class="jumbotron-item"> Welcome to the Subreddit Recommender! Have you ever wanted to post on Reddit, but
+                didn’t know which subreddit to post in? Enter your post below to see which subreddit it belongs in!</p>
+        </div>
+        <div class="flex-container">
+            <div class="column left-column">
+                <form class="form-inline global-search">
+                    <h3 class="outputmessage">Draft your post:</h3>
+                    <div class="form-group">
+                        <input type="text" id="title_input" name="title_input" class="form-control" placeholder="Title"
+                            value="{{title if title!= None else ''}}">
+                        <textarea id="input" type="text" name="search" class="form-control"
+                            placeholder="Ask me anything"
+                            style="resize: none;">{{query if query!= None else '' }}</textarea>
+                        <button type="submit" class="btn btn-info"> Go! </button>
+                    </div>
+                </form>
+            </div>
+            {% if data %}
+            <div class="column middle-column">
+                <div id={{response}}>
+                    <h3 class="outputmessage">{{result_header_message}}</h3>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for d in data %}
+                    <a class="list-group-item list-group-item-action" id="list-{{d['subreddit']}}" data-toggle="tab"
+                        href="#sub-{{d['subreddit']}}">r/{{d['subreddit']}}</a>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="column right-column">
+                <div class="tab-content">
+                    {% for d in data %}
+                    <div id="sub-{{d['subreddit']}}" class="tab-pane fade-in">
+                        <h3 class="outputmessage" style="text-decoration: underline;"><a
+                                href="https://www.reddit.com/r/{{d['subreddit']}}/submit" target="_blank">
+                                r/{{d['subreddit']}}</a></h3>
+                        {% if d['description'] != '' %}
+                        <p>{{d['description']}}</p>
+                        {% else %}
+                        <div style='text-align: center;'>
+                            <p style='text-align: left!important'>This subreddit doesn't have a description. How
+                                mysterious!</p>
+                            <img src='static/images/sad-bot.png' style='height: auto; width: 200px;'>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <script>
+                $("#sub-{{data[0]['subreddit']}}").addClass("active");
+                $("#list-{{data[0]['subreddit']}}").addClass("active");
+            </script>
+            {% else %}
+            {% if query or title %}
+            <div class="column error-column">
+                <h1 style="padding-top: 10px;">Oops!</h1>
+                <p style="padding: 20px;">{{error_message}}</p>
+                <img src="static/images/error.gif" style="width: 350px; height: auto;">
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
 </body>
 
 </html>
