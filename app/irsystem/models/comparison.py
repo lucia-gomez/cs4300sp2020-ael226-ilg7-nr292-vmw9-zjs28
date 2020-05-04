@@ -53,9 +53,11 @@ def get_cossim(query, inv_index, idf, norms):
 """
 
 
-def comparison(query, inverted_index, idf, norms, sentiment_lookup, p):
+def comparison(query, inverted_index, idf, norms, sentiment_lookup, p, should_use_merge=False):
     top_dict = get_cossim(query, inverted_index, idf, norms)
     new_top = use_sentiment(query, sentiment_lookup, top_dict, p)
+    if should_use_merge:
+        new_top = use_merge_postings(query, idf, inverted_index, new_top, p)
     return Counter(new_top).most_common()
 
 
@@ -63,25 +65,27 @@ def compare_string_to_posts(inverted_index, idf, norms, post_lookup, sentiment_l
     tokenized_query = tokenize(query)
     tokenized_title = tokenize(title)
     tokenized_input = []
+
     # counting title words twice so they have more weight
     tokenized_input.extend(tokenized_title)
     tokenized_input.extend(tokenized_title)
     tokenized_input.extend(tokenized_query)
+
     print("tokenized query: {}".format(tokenized_query))
     print("tokenized title: {}".format(tokenized_title))
-    print("tokenized input: {}".format(tokenized_input))
+
     scores = comparison(tokenized_input, inverted_index,
-                        idf, norms, sentiment_lookup, p)
+                        idf, norms, sentiment_lookup, p, True)
 
     if(len(scores) <= 0):
         return scores
 
-    new_query = rocchio(tokenized_input, scores, post_lookup)
+    new_query = rocchio(tokenized_input, scores, post_lookup, idf)
 
     print("new query after rocchio: {}".format(new_query))
 
     updated_scores = comparison(
-        new_query, inverted_index, idf, norms, sentiment_lookup, p)
+        new_query, inverted_index, idf, norms, sentiment_lookup, p, False)
 
     return updated_scores
 
@@ -119,14 +123,18 @@ Given the results of the original query, update the query using the top
 """
 
 
-def rocchio(original_tokenized_query, sim_scores, post_lookup):
-
+def rocchio(original_tokenized_query, sim_scores, post_lookup, idf):
     count = 0
 
     a = 1  # how much we weigh the original query
     b = 1  # how much we weigh the similar posts
 
     query_count = Counter(original_tokenized_query)
+
+    #remove unnecessary tokens
+    for token in query_count:
+        if not token in idf:
+            query_count[token] = 0
 
     q0 = mult_posts(query_count.most_common(), a)
     # assume top pseudo_relevance_rocchio_top_posts are relevant
@@ -142,10 +150,12 @@ def rocchio(original_tokenized_query, sim_scores, post_lookup):
 
     # extend the length of the query by 20%
 
-    print("top 10 potential query additons".format(
-        sum_queries(q0, rel_count)[:10]))
-    q1 = sum_queries(q0, rel_count)[:math.ceil(
-        len(original_tokenized_query) * 1.2)]
+    print("top 5 potential query additons {}".format(sum_queries(q0, rel_count)[:5]))
+
+    # q1 = sum_queries(q0, rel_count)[:math.ceil(
+    #     len(original_tokenized_query) * 1.2)]
+    q1 = sum_queries(q0, rel_count)
+
     new_query = []
 
     for word, score in q1:
@@ -155,6 +165,18 @@ def rocchio(original_tokenized_query, sim_scores, post_lookup):
 
     return new_query
 
+def postings_merge(token1, token2, inverted_index):
+    A = inverted_index[token1]
+    B = inverted_index[token2]
+
+    a = set()
+    b = set()
+
+    for elt in A:
+        a.add(elt[0])
+    for elt in B:
+        b.add(elt[0])
+    return a.intersection(b)
 
 """
     Organizes the differences between sentiment of query string and
@@ -178,6 +200,32 @@ def use_sentiment(query, sentiment_lookup, cossim, p):
             new_scores[k] = cossim[k]
     return new_scores
 
+def use_merge_postings(query_tokens, idf, inverted_index, cossim, p):
+
+    filtered_query = []
+    for token in query_tokens:
+        if token in idf:
+            filtered_query.append(token)
+
+    #only use merge postings on queries with 2+ words
+    if(len(set(filtered_query)) < 2):
+        return cossim
+
+    #find the 2 rarest words in the query (highest idf)
+    sorted_query = sorted(set(filtered_query), key=lambda x: idf[x] if x in idf else 0, reverse=True)
+
+    print("rarest words in query: {}".format(sorted_query[:5]))
+
+    M = set(postings_merge(sorted_query[0], sorted_query[1], inverted_index))
+    c = 0
+    for post in cossim.keys():
+        if post in M:
+            cossim[post] *= (2)
+            c+= 1
+        else:
+            cossim[post] *= 1
+    print("increased weight to {} posts".format(c))
+    return cossim
 
 """
     Top-level function, outputs list of subreddits for each post in
