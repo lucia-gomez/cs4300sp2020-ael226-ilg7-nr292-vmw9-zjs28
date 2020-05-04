@@ -175,3 +175,11 @@ a.list-group-item{
 input#title_input {
   width: 100%;
 }
+
+.lab {
+  float: left;
+  font-family: 'Varela Round', sans-serif;
+  font-size: 10pt;
+  padding-top: 10px;
+  color: #2E2E30;
+}

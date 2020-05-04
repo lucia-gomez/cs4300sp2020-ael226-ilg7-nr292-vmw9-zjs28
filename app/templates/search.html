@@ -31,9 +31,12 @@
         <form class="form-inline global-search">
           <h3 class="outputmessage">Draft your post:</h3>
           <div class="form-group">
-            <input type="text" id="title_input" name="title_input" class="form-control" placeholder="Title"
-              value="{{title if title!= None else ''}}">
-            <textarea id="input" type="text" name="search" class="form-control" placeholder="Ask me anything"
+            <label for="title_input" class="lab">Title</label>
+            <input type="text" id="title_input" name="title_input" class="form-control"
+              placeholder="e.g. Animal Crossing Progress" value="{{title if title!= None else ''}}">
+            <label for="input" class="lab">Body</label>
+            <textarea id="input" type="text" name="search" class="form-control"
+              placeholder="e.g. I have been playing animal crossing so much lately!"
               style="resize: none;">{{query if query!= None else '' }}</textarea>
             <button type="submit" class="btn btn-info"> Go! </button>
           </div>
