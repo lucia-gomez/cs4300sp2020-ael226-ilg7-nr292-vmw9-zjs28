@@ -52,16 +52,16 @@ def get_cossim(query, inv_index, idf, norms):
     TODO: make more complicated (ML, etc.) later
 """
 
-
-def comparison(query, inverted_index, idf, norms, sentiment_lookup, p, should_use_merge=False):
+def comparison(text, query, inverted_index, idf, norms, sentiment_lookup, post_lookup, p, should_use_merge=False):
     top_dict = get_cossim(query, inverted_index, idf, norms)
-    new_top = use_sentiment(query, sentiment_lookup, top_dict, p)
+    new_top = use_sentiment(query, sentiment_lookup, top_dict, post_lookup, p)
     if should_use_merge:
-        new_top = use_merge_postings(query, idf, inverted_index, new_top, p)
+        new_top = use_merge_postings(query, idf, inverted_index, new_top)
     return Counter(new_top).most_common()
 
 
 def compare_string_to_posts(inverted_index, idf, norms, post_lookup, sentiment_lookup, p, query="", title=""):
+    text_input = query + " " + title
     tokenized_query = tokenize(query)
     tokenized_title = tokenize(title)
     tokenized_input = []
@@ -74,8 +74,8 @@ def compare_string_to_posts(inverted_index, idf, norms, post_lookup, sentiment_l
     print("tokenized query: {}".format(tokenized_query))
     print("tokenized title: {}".format(tokenized_title))
 
-    scores = comparison(tokenized_input, inverted_index,
-                        idf, norms, sentiment_lookup, p, True)
+    scores = comparison(text_input, tokenized_input, inverted_index,
+                        idf, norms, sentiment_lookup, post_lookup, p, True)
 
     if(len(scores) <= 0):
         return scores
@@ -84,8 +84,8 @@ def compare_string_to_posts(inverted_index, idf, norms, post_lookup, sentiment_l
 
     print("new query after rocchio: {}".format(new_query))
 
-    updated_scores = comparison(
-        new_query, inverted_index, idf, norms, sentiment_lookup, p, False)
+    updated_scores = comparison(text_input, 
+        new_query, inverted_index, idf, norms, sentiment_lookup, post_lookup, p, False)
 
     return updated_scores
 
@@ -186,21 +186,29 @@ def postings_merge(token1, token2, inverted_index):
 """
 
 
-def use_sentiment(query, sentiment_lookup, cossim, p):
+def use_sentiment(query, sentiment_lookup, cossim, post_lookup, p):
+    print("testing sentiment lookup")
+    print(query)
     analyzer = SentimentIntensityAnalyzer()
     query_score = analyzer.polarity_scores(query)['compound']
     new_scores = {}
     for k in cossim.keys():
         # For some reason, there are posts with sentiment undocumented
         # Only using factoring in sentiment analysis on those with strong sentiment
-        if k in sentiment_lookup and (query_score > 0.5 or query_score < -0.5):
-            sentim_diff = abs((query_score - sentiment_lookup[k]) / 2)
+        if k in post_lookup:
+            subreddit = post_lookup[k]['subreddit']
+            sentim_diff = abs((query_score - sentiment_lookup[subreddit]) / 2)
             new_scores[k] = p*(1 - sentim_diff) + (1-p)*(cossim[k])
-        else:
-            new_scores[k] = cossim[k]
+
     return new_scores
 
-def use_merge_postings(query_tokens, idf, inverted_index, cossim, p):
+"""
+    Uses the merge postings algorithm to weigh certain posts more heavily.
+    Posts containing both of the two rarest (i.e. highest idf) words in the
+    query get higher similarity scores
+"""
+
+def use_merge_postings(query_tokens, idf, inverted_index, cossim):
 
     filtered_query = []
     for token in query_tokens:
@@ -259,5 +267,5 @@ def find_subreddits(top_x, post_ids, post_lookup, subreddit_lookup, descriptions
             subreddit, score, subreddit_freq[subreddit], subreddit_lookup[subreddit]))
 
     final_list = [{'subreddit': sub, 'description': descriptions[sub.lower()], 'score': score}
-                  for (sub, score) in sorted_list][:10]
+                  for (sub, score) in sorted_list][:top_x]
     return final_list

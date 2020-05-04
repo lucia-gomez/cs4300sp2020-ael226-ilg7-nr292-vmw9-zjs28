@@ -109,6 +109,20 @@ def make_sentiment_lookup(data):
         sentiment_lookup[post['id']] = score
     return sentiment_lookup
 
+def make_avg_sentiment_lookup(post_lookup, subreddit_lookup, sentiment_lookup):
+    avg_sentiment_lookup = {}
+    for i in post_lookup:
+        if i in sentiment_lookup:
+            subreddit = post_lookup[i]['subreddit']
+            sentiment = sentiment_lookup[i]
+            if subreddit in avg_sentiment_lookup:
+                avg_sentiment_lookup[subreddit] += sentiment
+            else:
+                avg_sentiment_lookup[subreddit] = sentiment
+    for i in avg_sentiment_lookup:
+        avg_sentiment_lookup[i] /= subreddit_lookup[i]
+    return avg_sentiment_lookup
+
 def create_and_store_structures():
     print("...creating structures")
 

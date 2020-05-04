@@ -61,7 +61,12 @@ class SearchEngine():
             sentiment_lookup = pickle.load(file)
             print("finished loading sentiment scores")
 
-        return idf, norms, post_lookup, subreddit_lookup, descriptions, sentiment_lookup
+        with open(file_path_name + "-avg_sentiment.pickle", 'rb') as file:
+            print("...loading avg sentiment scores")
+            avg_sentiment_lookup = pickle.load(file)
+            print("finished loading avg sentiment scores")
+
+        return idf, norms, post_lookup, subreddit_lookup, descriptions, avg_sentiment_lookup
 
     def run_tests(self):
         print("Testing for sentiment weighting: ")
@@ -83,11 +88,11 @@ class SearchEngine():
         for i in [x * 0.05 for x in range(0, 21)]:
             for j in range(len(queries)):
                 ranks = compare_string_to_posts(
-                    queries[j], self.inverted_index, self.idf, self.norms, self.post_lookup, self.sentiment_lookup, i)
+                    self.inverted_index, self.idf, self.norms, self.post_lookup, self.sentiment_lookup, i, queries[j], "")
                 subreddits = find_subreddits(
                     20, ranks, self.post_lookup, self.subreddit_lookup, self.descriptions)
                 for k in range(20):
-                    if subreddits[k][0] in relevant[j]:
+                    if subreddits[k]["subreddit"] in relevant[j]:
                         if i in scores:
                             scores[i] += 1 / (k+1)
                         else:
