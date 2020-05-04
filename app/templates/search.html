@@ -32,7 +32,7 @@
           <h3 class="outputmessage">Draft your post:</h3>
           <div class="form-group">
             <input type="text" id="title_input" name="title_input" class="form-control" placeholder="Title"
-              value="{{title}}">
+              value="{{title if title!= None else ''}}">
             <textarea id="input" type="text" name="search" class="form-control" placeholder="Ask me anything"
               style="resize: none;">{{query if query!= None else '' }}</textarea>
             <button type="submit" class="btn btn-info"> Go! </button>
